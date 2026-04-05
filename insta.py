@@ -12,33 +12,36 @@ import os
 from datetime import datetime
 import pytz
 from urllib.parse import quote
-# CORREÇÃO: Alterado de Cryptodome para Crypto para compatibilidade no Render
-from Crypto.Cipher import AES, PKCS1_v1_5
-from Crypto.PublicKey import RSA
-from Crypto.Random import get_random_bytes
+# Ajuste de compatibilidade para diferentes ambientes (Termux/Cloud)
+try:
+    from Cryptodome.Cipher import AES, PKCS1_v1_5
+    from Cryptodome.PublicKey import RSA
+    from Cryptodome.Random import get_random_bytes
+except ImportError:
+    from Crypto.Cipher import AES, PKCS1_v1_5
+    from Crypto.PublicKey import RSA
+    from Crypto.Random import get_random_bytes
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =================================================================
 # 🔥 SISTEMA SUPREMO THAYSON - V10 FULL MULTI-THREAD 🔥
 # =================================================================
 
-# --- SERVIDOR PARA O RENDER NÃO DAR ERRO (PORTA) ---
+# --- SERVIDOR PARA MANTER ONLINE (RENDER/RAILWAY) ---
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b'Bot Thayson Online')
-
-    def log_message(self, format, *args):
-        return # Silencia logs do servidor para limpar o console
+        self.wfile.write(b'SISTEMA THAYSON V10 ONLINE')
+    def log_message(self, format, *args): return
 
 def run_health_check():
     port = int(os.environ.get("PORT", 10000))
     server = HTTPServer(('0.0.0.0', port), SimpleHandler)
     server.serve_forever()
 
-# --- CONFIGURAÇÕES SEVENTV (HEADERS REAIS) ---
-IPTV_API = "https://seventvpainel.top" 
+# --- CONFIGURAÇÕES SEVENTV ---
+IPTV_API = "https://seventvpainel.top"
 IPTV_USER = "thaysonsilvacavalcante@gmail.com"
 IPTV_PASS = "Thayson13.@"
 APP_LINK = "https://www.mediafire.com/file/ngjeya72jutqgti/thayson+tv_1.0.apk/file"
@@ -57,7 +60,6 @@ PASS_DEFAULT = "7p_thayson11"
 THREAD_RELATORIO = "17845851594176556"
 COOKIE_STRING = 'datr=vozQaZ9FTfSuYSDOh8c3S56v; ig_did=0A7CD33E-D3EC-401D-9761-77259A2493C3; ps_l=1; ps_n=1; dpr=2.206249952316284; csrftoken=tRKyNCkXz6AvTYmfdFyPWdjskwyH4ArO; mid=adFo6AABAAG5tAitm_wsuvQy4hMH; ds_user_id=80209457261; sessionid=80209457261%3Anq7JkMhXWVecM5%3A0%3AAYgEIsTcdLwF_8GRLQUSnaoP34MoBNBWH-VybWDGBg; wd=489x920; rur="NHA\\05480209457261\\0541806868880:01fe0ebf18749c15d5abf3b87108fb18cbfb8a23125333139c16cd2c95d7412164beddbe"'
 
-# Controle de Threads
 contas_ativas = {} 
 
 MENU_BOT = (
@@ -70,7 +72,6 @@ MENU_BOT = (
     "0️⃣ *REINICIAR* 🔄"
 )
 
-# Fonte pequena (subscrito/sobrescrito) para estética
 def fonte_pequena(texto):
     mapa = str.maketrans("abcdefghijklmnopqrstuvwxyz0123456789", "ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖᵠʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹")
     return texto.lower().translate(mapa)
@@ -92,10 +93,7 @@ class InstagramBot:
         self.response = None
 
     def animar(self, texto):
-        for char in texto:
-            print(char, end="", flush=True)
-            time.sleep(0.01)
-        print()
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] {texto}")
 
     def get_pks(self):
         try:
@@ -141,7 +139,7 @@ class InstagramBot:
         return "⚠️ Erro ao gerar teste."
 
     def login_process(self, two_factor_code=None):
-        self.animar(f"🔐 Iniciando login para @{self.username}...")
+        self.animar(f"🔐 Logando @{self.username}...")
         enc_pw = self.encrypt_password(self.password)
         data = {"jazoest": "22565", "enc_password": enc_pw, "username": self.username, "device_id": self.device_id, "login_attempt_count": "0"}
         if two_factor_code: data["verification_code"] = two_factor_code
@@ -168,7 +166,7 @@ class InstagramBot:
             "X-CSRFToken": self.session.cookies.get("csrftoken", ""),
             "IG-U-DS-USER-ID": self.my_user_id
         }
-        data = {"action": "send_item", "thread_id": thread_id, "text": texto, "client_context": ts, "offline_threading_id": ts, "device_id": self.device_id, "mutation_token": ts, "_uuid": self.device_id}
+        data = {"action": "send_item", "thread_id": thread_id, "text": texto, "client_context": str(ts), "offline_threading_id": str(ts), "device_id": self.device_id, "mutation_token": str(ts), "_uuid": self.device_id}
         if recipient_id: data["recipient_users"] = f"[[{recipient_id}]]"
         try:
             res = self.session.post("https://i.instagram.com/api/v1/direct_v2/threads/broadcast/text/", data=data, headers=headers)
@@ -192,17 +190,9 @@ class InstagramBot:
 
                         if msg.startswith("stop"):
                             if not self.is_main:
-                                self.enviar_msg(tid, "🔴 Bot finalizado. Deslogando...", sid)
+                                self.enviar_msg(tid, "🔴 Bot finalizado.", sid)
                                 self.running = False
                                 if self.username in contas_ativas: del contas_ativas[self.username]
-                            else:
-                                parts = msg.split("@")
-                                if len(parts) > 1:
-                                    alvo = parts[1].strip()
-                                    if alvo in contas_ativas:
-                                        self.enviar_msg(tid, f"🛑 Encerrando sessão de @{alvo}...", sid)
-                                        contas_ativas[alvo].running = False
-                                        del contas_ativas[alvo]
                             continue
 
                         if self.is_main:
@@ -212,44 +202,34 @@ class InstagramBot:
                             else:
                                 step = self.user_states[sid]["step"]
                                 if step == "MENU":
-                                    if msg == "1": self.enviar_msg(tid, "⚠️ O Thayson está focado! Deixe recado na opção 2.", sid)
+                                    if msg == "1": self.enviar_msg(tid, "⚠️ Thayson está offline. Deixe recado na opção 2.", sid)
                                     elif msg == "2":
-                                        self.enviar_msg(tid, "👤 Qual seu nome para o recado?", sid)
+                                        self.enviar_msg(tid, "👤 Qual seu nome?", sid)
                                         self.user_states[sid]["step"] = "NOME"
                                     elif msg == "3":
-                                        self.enviar_msg(tid, "⏳ Gerando acesso SevenTV...", sid)
+                                        self.enviar_msg(tid, "⏳ Gerando acesso...", sid)
                                         self.enviar_msg(tid, self.gerar_iptv_real(), sid)
                                     elif msg == "4":
-                                        num_ativas = len(contas_ativas)
-                                        self.enviar_msg(tid, f"🚀 *GERENCIADOR* ({num_ativas}/5)\nEnvie `ATIVAR` para iniciar o passo a passo.", sid)
+                                        self.enviar_msg(tid, f"🚀 Ativas: {len(contas_ativas)}\nEnvie `ATIVAR` para começar.", sid)
                                     elif msg == "5":
-                                        self.enviar_msg(tid, f"📸 @{USER_DEFAULT}\n🟢 {ZAP_NUM}\n📥 {APP_LINK}", sid)
+                                        self.enviar_msg(tid, f"📸 @{USER_DEFAULT}\n📥 {APP_LINK}", sid)
                                     
                                     if msg == "ativar":
-                                        self.enviar_msg(tid, "🤖 *PASSO 1:* Digite o USUÁRIO do Instagram:", sid)
+                                        self.enviar_msg(tid, "🤖 Digite o USUÁRIO:", sid)
                                         self.user_states[sid]["step"] = "SET_USER"
-
+                                
                                 elif step == "SET_USER":
                                     self.user_states[sid]["new_u"] = msg
-                                    self.enviar_msg(tid, "🔑 *PASSO 2:* Digite a SENHA:", sid)
+                                    self.enviar_msg(tid, "🔑 Digite a SENHA:", sid)
                                     self.user_states[sid]["step"] = "SET_PASS"
                                 elif step == "SET_PASS":
                                     self.user_states[sid]["new_p"] = msg
-                                    self.enviar_msg(tid, "📝 *PASSO 3:* Digite a MENSAGEM FIXA:", sid)
-                                    self.user_states[sid]["step"] = "SET_FIXED"
-                                elif step == "SET_FIXED":
-                                    self.user_states[sid]["new_m"] = msg
-                                    self.enviar_msg(tid, "🎯 *PASSO 4:* Digite a MENSAGEM GATILHO (o que a pessoa escreve):", sid)
-                                    self.user_states[sid]["step"] = "SET_TRIGGER"
-                                elif step == "SET_TRIGGER":
-                                    self.user_states[sid]["new_t"] = msg
-                                    self.enviar_msg(tid, "🎁 *PASSO 5:* Digite a RESPOSTA para esse gatilho:", sid)
+                                    self.enviar_msg(tid, "🎁 Resposta para o gatilho:", sid)
                                     self.user_states[sid]["step"] = "SET_RESPONSE"
                                 elif step == "SET_RESPONSE":
                                     self.user_states[sid]["new_r"] = msg
-                                    self.enviar_msg(tid, "⏳ Tentando logar e ativar...", sid)
-                                    u, p, m, t, r = self.user_states[sid]["new_u"], self.user_states[sid]["new_p"], self.user_states[sid]["new_m"], self.user_states[sid]["new_t"], self.user_states[sid]["new_r"]
-                                    threading.Thread(target=self.init_worker, args=(u, p, m, t, r, tid, sid)).start()
+                                    self.enviar_msg(tid, "⏳ Ativando bot secundário...", sid)
+                                    threading.Thread(target=self.init_worker, args=(self.user_states[sid]["new_u"], self.user_states[sid]["new_p"], self.user_states[sid]["new_r"], tid, sid)).start()
                                     self.user_states[sid]["step"] = "FIM"
 
                                 elif step == "NOME":
@@ -257,41 +237,27 @@ class InstagramBot:
                                     self.enviar_msg(tid, "📝 Digite o recado:", sid)
                                     self.user_states[sid]["step"] = "RECADO"
                                 elif step == "RECADO":
-                                    rel = f"🔔 *NOVO AGENDAMENTO:*\n👤 De: {self.user_states[sid]['nome']}\n💬 Recado: {msg}"
-                                    self.enviar_msg(THREAD_RELATORIO, rel, None)
-                                    self.enviar_msg(tid, "✅ Agendamento enviado!", sid)
+                                    self.enviar_msg(THREAD_RELATORIO, f"🔔 *RECADO:*\n👤 {self.user_states[sid]['nome']}\n💬 {msg}", None)
+                                    self.enviar_msg(tid, "✅ Enviado!", sid)
                                     self.user_states[sid]["step"] = "FIM"
                         else:
                             txt_pequeno = fonte_pequena(f"bot by thayson zap {ZAP_NUM}")
-                            creditos = f"🤖 {txt_pequeno}\n⚠️ Consulte o admin caso queira um bot."
-                            
-                            if self.trigger and msg == self.trigger.lower():
-                                self.enviar_msg(tid, self.response, sid)
-                            else:
-                                self.enviar_msg(tid, f"{self.fixed_msg}\n\n{creditos}", sid)
-                await asyncio.sleep(10)
-            except: await asyncio.sleep(20)
+                            self.enviar_msg(tid, f"{self.response}\n\n🤖 {txt_pequeno}", sid)
+                await asyncio.sleep(8)
+            except: await asyncio.sleep(15)
 
-    def init_worker(self, u, p, m, t, r, tid, sid):
+    def init_worker(self, u, p, r, tid, sid):
         bot = InstagramBot(u, p)
-        bot.fixed_msg = m
-        bot.trigger = t
         bot.response = r
-        res = bot.login_process()
-        if res == "SUCCESS":
+        if bot.login_process() == "SUCCESS":
             contas_ativas[u] = bot
-            self.enviar_msg(tid, f"✅ Bot @{u} ATIVADO com sucesso!", sid)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(bot.monitorar())
-        else:
-            self.enviar_msg(tid, f"❌ Erro em @{u}: {res}", sid)
+            self.enviar_msg(tid, f"✅ @{u} Online!", sid)
+            asyncio.run(bot.monitorar())
 
 async def main_engine():
     main_bot = InstagramBot(USER_DEFAULT, PASS_DEFAULT, is_main=True)
     if main_bot.login_process() != "SUCCESS":
-        cookies = COOKIE_STRING.split(';')
-        for c in cookies:
+        for c in COOKIE_STRING.split(';'):
             if '=' in c:
                 n, v = c.strip().split('=', 1)
                 main_bot.session.cookies.set(n, v.replace('"', ''), domain=".instagram.com")
@@ -300,9 +266,7 @@ async def main_engine():
     await main_bot.monitorar()
 
 if __name__ == "__main__":
-    # Inicia thread do servidor web para o Render aceitar a conexão
     threading.Thread(target=run_health_check, daemon=True).start()
-    
-    print("      THAYSON BOT SUPREMO V10")
+    print("🔥 THAYSON SUPREMO V10 CARREGADO 🔥")
     try: asyncio.run(main_engine())
-    except KeyboardInterrupt: print("\nSaindo...")
+    except KeyboardInterrupt: pass
