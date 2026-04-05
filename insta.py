@@ -12,21 +12,25 @@ import os
 from datetime import datetime
 import pytz
 from urllib.parse import quote
-from Cryptodome.Cipher import AES, PKCS1_v1_5
-from Cryptodome.PublicKey import RSA
-from Cryptodome.Random import get_random_bytes
+# CORREÇÃO: Alterado de Cryptodome para Crypto para compatibilidade no Render
+from Crypto.Cipher import AES, PKCS1_v1_5
+from Crypto.PublicKey import RSA
+from Crypto.Random import get_random_bytes
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =================================================================
 # 🔥 SISTEMA SUPREMO THAYSON - V10 FULL MULTI-THREAD 🔥
 # =================================================================
 
-# --- SERVIDOR PARA O RENDER NÃO DAR ERRO ---
+# --- SERVIDOR PARA O RENDER NÃO DAR ERRO (PORTA) ---
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b'Bot Thayson Online')
+
+    def log_message(self, format, *args):
+        return # Silencia logs do servidor para limpar o console
 
 def run_health_check():
     port = int(os.environ.get("PORT", 10000))
@@ -34,7 +38,7 @@ def run_health_check():
     server.serve_forever()
 
 # --- CONFIGURAÇÕES SEVENTV (HEADERS REAIS) ---
-IPTV_API = "https://seventvpainel.top" # Removi /api para concatenar melhor
+IPTV_API = "https://seventvpainel.top" 
 IPTV_USER = "thaysonsilvacavalcante@gmail.com"
 IPTV_PASS = "Thayson13.@"
 APP_LINK = "https://www.mediafire.com/file/ngjeya72jutqgti/thayson+tv_1.0.apk/file"
@@ -258,7 +262,6 @@ class InstagramBot:
                                     self.enviar_msg(tid, "✅ Agendamento enviado!", sid)
                                     self.user_states[sid]["step"] = "FIM"
                         else:
-                            # Lógica para contas secundárias (com gatilhos e fonte pequena)
                             txt_pequeno = fonte_pequena(f"bot by thayson zap {ZAP_NUM}")
                             creditos = f"🤖 {txt_pequeno}\n⚠️ Consulte o admin caso queira um bot."
                             
@@ -297,7 +300,7 @@ async def main_engine():
     await main_bot.monitorar()
 
 if __name__ == "__main__":
-    # Inicia thread do servidor web para o Render
+    # Inicia thread do servidor web para o Render aceitar a conexão
     threading.Thread(target=run_health_check, daemon=True).start()
     
     print("      THAYSON BOT SUPREMO V10")
