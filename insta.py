@@ -15,10 +15,23 @@ from urllib.parse import quote
 from Cryptodome.Cipher import AES, PKCS1_v1_5
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # =================================================================
 # 🔥 SISTEMA SUPREMO THAYSON - V10 FULL MULTI-THREAD 🔥
 # =================================================================
+
+# --- SERVIDOR PARA O RENDER NÃO DAR ERRO ---
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'Bot Thayson Online')
+
+def run_health_check():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
+    server.serve_forever()
 
 # --- CONFIGURAÇÕES SEVENTV (HEADERS REAIS) ---
 IPTV_API = "https://seventvpainel.top" # Removi /api para concatenar melhor
@@ -284,6 +297,9 @@ async def main_engine():
     await main_bot.monitorar()
 
 if __name__ == "__main__":
+    # Inicia thread do servidor web para o Render
+    threading.Thread(target=run_health_check, daemon=True).start()
+    
     print("      THAYSON BOT SUPREMO V10")
     try: asyncio.run(main_engine())
     except KeyboardInterrupt: print("\nSaindo...")
